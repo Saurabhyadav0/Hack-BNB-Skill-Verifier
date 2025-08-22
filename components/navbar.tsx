@@ -2,9 +2,16 @@
 
 import Link from "next/link"
 import { useTheme } from "next-themes"
+import Image from "next/image"
 import { Switch } from "@/components/ui/switch"
 import { Moon, Sun } from "lucide-react"
 import { WalletButton } from "./wallet-button"
+import darkLogo from "./darkLogo.png"
+import lightLogo from "./lightLogo.png"
+
+
+
+
 
 export function Navbar() {
   const { theme, setTheme } = useTheme()
@@ -13,9 +20,21 @@ export function Navbar() {
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
+          {/* Logo 
           <Link href="/" className="flex items-center space-x-2">
             <span className="text-xl font-bold">SkillVerifier</span>
+          </Link>*/}
+
+           {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2">
+            <Image
+              src={theme === "dark" ? darkLogo : lightLogo}
+              alt="SkillVerifier Logo"
+              width={240}
+              height={190}
+              priority
+            />
+        
           </Link>
 
           {/* Navigation Links */}
