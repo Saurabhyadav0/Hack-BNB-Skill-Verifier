@@ -1,97 +1,150 @@
 import { type NextRequest, NextResponse } from "next/server"
+import vm from "vm"
+import { prisma } from "@/lib/prisma"
+
+async function fetchChallenge(challengeId: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/challenges`, {
+    cache: "no-store",
+  })
+  const list = await res.json()
+  return list.find((c: any) => c.id === challengeId)
+}
+
+function runHiddenTests(challengeId: string, userCode: string): { passed: boolean; details: string[] } {
+  const results: string[] = []
+  let passed = true
+
+  const context = vm.createContext({ console: { log: () => {} } })
+
+  try {
+    if (challengeId === "1") {
+      const harness = `
+        ${userCode}
+        if (typeof processArray !== 'function') { throw new Error('processArray not defined'); }
+        globalThis.__exports = { processArray };
+      `
+      const script = new vm.Script(harness, { filename: "sandbox.js" })
+      script.runInContext(context, { timeout: 2000 })
+      const mod: any = (context as any).__exports
+      const tests = [
+        { input: [5, 12, 8, 12, 3, 15, 8, 20], expected: [12, 15, 20] },
+        { input: [1, 2, 3, 4, 5], expected: [] },
+        { input: [10, 15, 10, 20, 25], expected: [10, 15, 20, 25] },
+      ]
+      for (const t of tests) {
+        const out = mod.processArray(t.input)
+        const ok = JSON.stringify(out) === JSON.stringify(t.expected)
+        results.push(`input=${JSON.stringify(t.input)} ok=${ok}`)
+        if (!ok) passed = false
+      }
+    } else if (challengeId === "2") {
+      const harness = `
+        ${userCode}
+        if (typeof TreeNode !== 'function' || typeof inorderTraversal !== 'function' || typeof preorderTraversal !== 'function' || typeof postorderTraversal !== 'function') { throw new Error('required functions not defined'); }
+        globalThis.__exports = { TreeNode, inorderTraversal, preorderTraversal, postorderTraversal };
+      `
+      const script = new vm.Script(harness, { filename: "sandbox.js" })
+      script.runInContext(context, { timeout: 2000 })
+      const mod: any = (context as any).__exports
+      const root = new mod.TreeNode(1, null, new mod.TreeNode(2, new mod.TreeNode(3), null))
+      const expected = { inorder: [1, 3, 2], preorder: [1, 2, 3], postorder: [3, 2, 1] }
+      const res1 = JSON.stringify(mod.inorderTraversal(root)) === JSON.stringify(expected.inorder)
+      const res2 = JSON.stringify(mod.preorderTraversal(root)) === JSON.stringify(expected.preorder)
+      const res3 = JSON.stringify(mod.postorderTraversal(root)) === JSON.stringify(expected.postorder)
+      results.push(`inorder=${res1} preorder=${res2} postorder=${res3}`)
+      passed = res1 && res2 && res3
+    } else {
+      results.push("Unknown challenge; no tests executed")
+      passed = false
+    }
+  } catch (e: any) {
+    results.push(`runtime_error: ${e?.message || String(e)}`)
+    passed = false
+  }
+
+  return { passed, details: results }
+}
+
+async function scoreEfficiencyWithLLM(code: string, challengeTitle: string): Promise<{ efficiency: number; feedback: string }> {
+  const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    // Fallback heuristic: length and presence of common patterns
+    const base = 50 + Math.min(30, Math.max(0, 30 - Math.floor(code.length / 50)))
+    const bonus = ["map(", "filter(", "reduce(", "Set(", "for ("].some(k => code.includes(k)) ? 10 : 0
+    return { efficiency: Math.min(100, base + bonus), feedback: "Heuristic efficiency score (no LLM key provided)." }
+  }
+
+  try {
+    // Groq-like or OpenAI compatible
+    const endpoint = process.env.GROQ_API_KEY ? "https://api.groq.com/openai/v1/chat/completions" : "https://api.openai.com/v1/chat/completions"
+    const model = process.env.GROQ_API_KEY ? "llama-3.1-8b-instant" : "gpt-4o-mini"
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: "You are an expert code reviewer. Score efficiency, time and space complexity on a 0-40 scale, give brief feedback." },
+          { role: "user", content: `Challenge: ${challengeTitle}\nCode:\n\n${code}\n\nReturn JSON: {"efficiency": number(0-40), "feedback": string}` },
+        ],
+        temperature: 0.2,
+      }),
+    })
+    const json: any = await res.json()
+    const content = json.choices?.[0]?.message?.content || "{\"efficiency\": 20, \"feedback\": \"Default\"}"
+    const parsed = JSON.parse(content)
+    const efficiency = Math.max(0, Math.min(40, Number(parsed.efficiency) || 20))
+    return { efficiency, feedback: String(parsed.feedback || "") }
+  } catch {
+    return { efficiency: 20, feedback: "LLM scoring failed; defaulted to 20." }
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { challengeId, code } = await request.json()
+    const { challengeId, code, language } = await request.json()
 
-    // Simulate AI processing delay
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // Fetch challenge meta for title
+    const challenge = await fetchChallenge(String(challengeId)).catch(() => null)
 
-    // Mock AI evaluation logic based on code content and challenge
-    const mockEvaluations = {
-      "1": {
-        // Array Manipulation challenge
-        keywords: ["filter", "sort", "unique", "Set", "Array.from"],
-        maxScore: 100,
+    // Run hidden tests in a sandbox
+    let tests = { passed: false, details: ["language not supported for execution"] as string[] }
+    if (!language || ["javascript", "typescript"].includes(String(language))) {
+      tests = runHiddenTests(String(challengeId), String(code || ""))
+    }
+
+    // Correctness base (0-60)
+    const correctness = tests.passed ? 60 : 20
+
+    // LLM efficiency (0-40)
+    const llm = await scoreEfficiencyWithLLM(String(code || ""), challenge?.title || `Challenge ${challengeId}`)
+
+    const total = Math.max(0, Math.min(100, correctness + llm.efficiency))
+    const passed = total >= 80
+
+    const feedback = [
+      tests.passed ? "All required tests passed." : `Some tests failed. Details: ${tests.details.join("; ")}`,
+      `Efficiency score: ${llm.efficiency}/40. ${llm.feedback}`,
+      `Total score: ${total}/100`,
+    ].join(" \n")
+
+    // Persist submission
+    await prisma.submissions.create({
+      data: {
+        user_id: null,
+        challenge_id: String(challengeId),
+        code: String(code || ""),
+        language: String(language || "javascript"),
+        passed,
+        score: total,
+        efficiency: llm.efficiency,
+        feedback,
       },
-      "2": {
-        // Binary Tree Traversal challenge
-        keywords: ["recursion", "left", "right", "push", "TreeNode"],
-        maxScore: 100,
-      },
-    }
-
-    const evaluation = mockEvaluations[challengeId as keyof typeof mockEvaluations] || mockEvaluations["1"]
-
-    // Simple scoring based on keyword presence and code quality indicators
-    let score = 40 // Base score
-    let feedback = "Your solution shows basic understanding. "
-
-    // Check for keywords
-    const keywordMatches = evaluation.keywords.filter((keyword) =>
-      code.toLowerCase().includes(keyword.toLowerCase()),
-    ).length
-
-    score += (keywordMatches / evaluation.keywords.length) * 40
-
-    // Check for good practices
-    if (code.includes("//") || code.includes("/*")) {
-      score += 5
-      feedback += "Good use of comments. "
-    }
-
-    if (code.includes("const ") || code.includes("let ")) {
-      score += 5
-      feedback += "Proper variable declarations. "
-    }
-
-    if (code.includes("return")) {
-      score += 10
-      feedback += "Function returns a value correctly. "
-    }
-
-    // Add some randomness to make it more realistic
-    const randomAdjustment = Math.floor(Math.random() * 21) - 10 // -10 to +10
-    score = Math.max(0, Math.min(100, Math.floor(score + randomAdjustment)))
-
-    const passed = score >= 70
-
-    // Generate contextual feedback based on score
-    if (score >= 90) {
-      feedback = "Excellent solution! Your code demonstrates strong algorithmic thinking and follows best practices. "
-    } else if (score >= 80) {
-      feedback = "Great work! Your solution is solid with room for minor optimizations. "
-    } else if (score >= 70) {
-      feedback = "Good solution! Your code works correctly but could benefit from some improvements. "
-    } else if (score >= 50) {
-      feedback = "Your solution shows understanding but has some issues. Consider edge cases and optimization. "
-    } else {
-      feedback = "Your solution needs significant improvements. Review the problem requirements and try again. "
-    }
-
-    // Add specific feedback based on challenge
-    if (challengeId === "1") {
-      if (code.includes("Set")) {
-        feedback += "Great use of Set for removing duplicates! "
-      }
-      if (code.includes("sort")) {
-        feedback += "Proper sorting implementation. "
-      }
-      if (!code.includes("filter")) {
-        feedback += "Consider using filter() for cleaner code. "
-      }
-    } else if (challengeId === "2") {
-      if (code.includes("recursion") || (code.includes("left") && code.includes("right"))) {
-        feedback += "Good recursive approach for tree traversal! "
-      }
-      if (!code.includes("push")) {
-        feedback += "Make sure to collect results in an array. "
-      }
-    }
+    })
 
     return NextResponse.json({
-      score,
-      feedback: feedback.trim(),
+      score: total,
+      feedback,
       passed,
       timestamp: new Date().toISOString(),
     })

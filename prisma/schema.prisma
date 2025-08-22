@@ -15,4 +15,19 @@ model users {
   created_at     DateTime  @default(now()) @db.Timestamptz
 }
 
+model submissions {
+  id            String   @id @default(uuid()) @db.Uuid
+  user_id       String?  @db.Uuid
+  challenge_id  String
+  code          String
+  language      String   @default("javascript")
+  passed        Boolean
+  score         Int
+  efficiency    Int
+  feedback      String
+  created_at    DateTime @default(now()) @db.Timestamptz
+
+  @@index([user_id])
+}
+
 

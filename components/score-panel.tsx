@@ -96,12 +96,12 @@ export function ScorePanel({ challengeId }: ScorePanelProps) {
           <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">{result?.feedback}</p>
         </div>
 
-        {/* Mint NFT Button */}
-        {result?.passed && (
+        {/* Mint NFT Button (score >= 80) */}
+        {result && result.score >= 80 && (
           <div className="pt-4 border-t">
             <div className="flex items-center gap-2 mb-3">
               <Award className="h-4 w-4 text-yellow-500" />
-              <span className="text-sm font-medium">Congratulations! You passed!</span>
+              <span className="text-sm font-medium">Great job! Score ≥ 80 unlocks mint.</span>
             </div>
             <MintButton challengeId={challengeId} score={result.score} />
           </div>

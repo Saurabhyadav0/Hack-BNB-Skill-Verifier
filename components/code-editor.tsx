@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Loader2, Play } from "lucide-react"
 import dynamic from "next/dynamic"
@@ -23,6 +24,7 @@ interface CodeEditorProps {
 export function CodeEditor({ challengeId, initialCode }: CodeEditorProps) {
   const [code, setCode] = useState(initialCode)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [language, setLanguage] = useState<string>("javascript")
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
@@ -36,6 +38,7 @@ export function CodeEditor({ challengeId, initialCode }: CodeEditorProps) {
         body: JSON.stringify({
           challengeId,
           code,
+          language,
         }),
       })
 
@@ -56,10 +59,25 @@ export function CodeEditor({ challengeId, initialCode }: CodeEditorProps) {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">Language</div>
+        <Select value={language} onValueChange={setLanguage}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Language" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="javascript">JavaScript</SelectItem>
+            <SelectItem value="typescript">TypeScript</SelectItem>
+            <SelectItem value="python">Python</SelectItem>
+            <SelectItem value="cpp">C++</SelectItem>
+            <SelectItem value="java">Java</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="border rounded-lg overflow-hidden">
         <MonacoEditor
           height="400px"
-          defaultLanguage="javascript"
+          defaultLanguage={language === "typescript" ? "typescript" : "javascript"}
           value={code}
           onChange={(value) => setCode(value || "")}
           theme="vs-dark"
