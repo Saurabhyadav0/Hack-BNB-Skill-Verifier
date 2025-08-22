@@ -1,21 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
 import crypto from "crypto"
+import { prisma } from "@/lib/prisma"
 
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-        },
-    }
-)
-
-console.log(process.env.NEXT_PUBLIC_SUPABASE_URL);
-console.log(process.env.SUPABASE_SERVICE_ROLE_KEY);
 export async function POST(request: NextRequest) {
     try {
         const { wallet_address } = await request.json()
@@ -30,19 +16,14 @@ export async function POST(request: NextRequest) {
         const normalizedAddress = wallet_address.toLowerCase()
         const nonce = crypto.randomBytes(16).toString("hex")
 
-        // Ensure a user row exists, update or insert
-        const { data, error } = await supabase
-            .from("users")
-            .upsert(
-                { wallet_address: normalizedAddress, nonce },
-                { onConflict: "wallet_address" } // 👈 important
-            )
-            .select()
-            .single()
+        // Upsert user by wallet_address, returning the nonce
+        const user = await prisma.users.upsert({
+            where: { wallet_address: normalizedAddress },
+            update: { nonce },
+            create: { wallet_address: normalizedAddress, nonce }
+        })
 
-        if (error) throw error
-
-        return NextResponse.json({ nonce: data.nonce, user: data })
+        return NextResponse.json({ nonce: user.nonce })
     } catch (error) {
         console.error("Nonce error:", error)
         return NextResponse.json(

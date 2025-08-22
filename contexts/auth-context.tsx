@@ -13,7 +13,7 @@ import {
   getStoredWallet,
   type WalletError,
   type WalletState,
-} from "@/lib/ wallet";
+} from "@/lib/wallet";
 
 interface AuthContextType extends WalletState {
   connect: () => Promise<void>;
@@ -91,7 +91,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!nonceRes.ok) {
         const errData = await nonceRes.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to get nonce from server");
+        const message = [errData.error, errData.details, errData.hint]
+          .filter(Boolean)
+          .join(" | ") || "Failed to get nonce from server";
+        throw new Error(message);
       }
 
       const { nonce } = await nonceRes.json();
@@ -113,7 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!verifyRes.ok) {
         const errData = await verifyRes.json().catch(() => ({}));
-        throw new Error(errData.error || "Wallet verification failed");
+        const message = [errData.error, errData.details, errData.hint]
+          .filter(Boolean)
+          .join(" | ") || "Wallet verification failed";
+        throw new Error(message);
       }
 
       const data = await verifyRes.json();

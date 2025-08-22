@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
 import { ethers } from "ethers"
 import crypto from "crypto"
-
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-        },
-    }
-)
+import { prisma } from "@/lib/prisma"
 
 export async function POST(request: NextRequest) {
     try {
@@ -24,13 +12,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Fetch user & nonce
-        const { data: user, error } = await supabase
-            .from("users")
-            .select("*")
-            .eq("wallet_address", wallet_address.toLowerCase())
-            .single()
+        const user = await prisma.users.findUnique({
+            where: { wallet_address: wallet_address.toLowerCase() }
+        })
 
-        if (error || !user) {
+        if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 })
         }
 
@@ -43,10 +29,10 @@ export async function POST(request: NextRequest) {
 
         // Reset nonce to prevent replay attacks
         const newNonce = crypto.randomBytes(16).toString("hex")
-        await supabase
-            .from("users")
-            .update({ nonce: newNonce })
-            .eq("wallet_address", wallet_address.toLowerCase())
+        await prisma.users.update({
+            where: { wallet_address: wallet_address.toLowerCase() },
+            data: { nonce: newNonce, verified_at: new Date() }
+        })
 
         // ✅ Auth success
         return NextResponse.json({

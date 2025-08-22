@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
-import { formatAddress } from "@/lib/ wallet";
+import { formatAddress } from "@/lib/wallet";
 import { Wallet, LogOut, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
