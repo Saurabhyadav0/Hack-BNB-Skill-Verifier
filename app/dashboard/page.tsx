@@ -10,18 +10,19 @@ import Link from "next/link"
 
 // Mock user data
 const userStats = {
-  totalChallenges: 12,
-  completedChallenges: 8,
+  totalChallenges: 20,
+  completedChallenges: 12,
   averageScore: 78,
-  nftsMinted: 5,
+  nftsMinted: 7,
 }
 
+// History of challenge attempts (mixed easy/medium/hard)
 const challengeAttempts = [
   {
     id: "1",
-    title: "Array Manipulation",
+    title: "Two Sum",
     difficulty: "Easy",
-    score: 85,
+    score: 90,
     status: "passed",
     nftMinted: true,
     attemptedAt: "2024-01-15",
@@ -29,9 +30,9 @@ const challengeAttempts = [
   },
   {
     id: "2",
-    title: "Binary Tree Traversal",
+    title: "Longest Palindromic Substring",
     difficulty: "Medium",
-    score: 92,
+    score: 84,
     status: "passed",
     nftMinted: true,
     attemptedAt: "2024-01-14",
@@ -39,9 +40,9 @@ const challengeAttempts = [
   },
   {
     id: "3",
-    title: "API Rate Limiter",
+    title: "Median of Two Sorted Arrays",
     difficulty: "Hard",
-    score: 45,
+    score: 55,
     status: "failed",
     nftMinted: false,
     attemptedAt: "2024-01-13",
@@ -49,9 +50,9 @@ const challengeAttempts = [
   },
   {
     id: "4",
-    title: "React Component Optimization",
-    difficulty: "Medium",
-    score: 88,
+    title: "Valid Parentheses",
+    difficulty: "Easy",
+    score: 100,
     status: "passed",
     nftMinted: true,
     attemptedAt: "2024-01-12",
@@ -59,8 +60,8 @@ const challengeAttempts = [
   },
   {
     id: "5",
-    title: "Database Query Optimization",
-    difficulty: "Hard",
+    title: "Merge Intervals",
+    difficulty: "Medium",
     score: 76,
     status: "passed",
     nftMinted: true,
@@ -69,9 +70,9 @@ const challengeAttempts = [
   },
   {
     id: "6",
-    title: "String Pattern Matching",
-    difficulty: "Medium",
-    score: 62,
+    title: "Regular Expression Matching",
+    difficulty: "Hard",
+    score: 48,
     status: "failed",
     nftMinted: false,
     attemptedAt: "2024-01-10",
@@ -79,9 +80,9 @@ const challengeAttempts = [
   },
   {
     id: "7",
-    title: "Graph Algorithms",
-    difficulty: "Hard",
-    score: 94,
+    title: "Best Time to Buy and Sell Stock",
+    difficulty: "Easy",
+    score: 95,
     status: "passed",
     nftMinted: true,
     attemptedAt: "2024-01-09",
@@ -89,13 +90,33 @@ const challengeAttempts = [
   },
   {
     id: "8",
-    title: "Dynamic Programming",
+    title: "Container With Most Water",
     difficulty: "Medium",
-    score: 71,
-    status: "passed",
+    score: 69,
+    status: "failed",
     nftMinted: false,
     attemptedAt: "2024-01-08",
     txHash: null,
+  },
+  {
+    id: "9",
+    title: "Trapping Rain Water",
+    difficulty: "Hard",
+    score: 82,
+    status: "passed",
+    nftMinted: true,
+    attemptedAt: "2024-01-07",
+    txHash: "0xabcd...wxyz",
+  },
+  {
+    id: "10",
+    title: "Climbing Stairs",
+    difficulty: "Easy",
+    score: 100,
+    status: "passed",
+    nftMinted: true,
+    attemptedAt: "2024-01-06",
+    txHash: "0x4444...yyyy",
   },
 ]
 
@@ -263,23 +284,6 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Call to Action */}
-          <div className="mt-8 text-center">
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle>Ready for More Challenges?</CardTitle>
-                <CardDescription>Continue improving your skills and earning more proof-of-skill NFTs.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/challenges">
-                  <Button size="lg" className="w-full sm:w-auto">
-                    Browse Challenges
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </main>
 

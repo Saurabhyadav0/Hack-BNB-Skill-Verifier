@@ -11,67 +11,60 @@ const getChallengeById = (id: string) => {
   const challenges = {
     "1": {
       id: "1",
-      title: "Array Manipulation",
-      description: "Implement efficient algorithms for common array operations like sorting, searching, and filtering.",
-      difficulty: "Easy",
-      estimatedTime: "30 min",
-      tags: ["JavaScript", "Arrays", "Algorithms"],
-      prompt: `Write a function that takes an array of numbers and returns a new array with the following transformations:
-1. Remove all duplicate numbers
-2. Sort the array in ascending order
-3. Filter out numbers less than 10
+      title: "Median of Two Sorted Arrays",
+      description:
+        "Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays.",
+      difficulty: "Hard",
+      estimatedTime: "45 min",
+      tags: ["Array", "Binary Search", "Divide and Conquer"],
+      prompt: `You are given two sorted arrays nums1 and nums2 of size m and n respectively. 
+Return the median of the two sorted arrays. The overall run time complexity should be O(log (m+n)).
 
-Example:
-Input: [5, 12, 8, 12, 3, 15, 8, 20]
-Output: [12, 15, 20]
+Example 1:
+Input: nums1 = [1,3], nums2 = [2]
+Output: 2.00000
 
-Your function should be named 'processArray' and take one parameter 'numbers'.`,
-      starterCode: `function processArray(numbers) {
+Example 2:
+Input: nums1 = [1,2], nums2 = [3,4]
+Output: 2.50000`,
+      starterCode: `function findMedianSortedArrays(nums1, nums2) {
   // Your code here
-  
 }
 
-// Test your function
-console.log(processArray([5, 12, 8, 12, 3, 15, 8, 20]));`,
+// Test cases
+console.log(findMedianSortedArrays([1,3], [2])); // Expected: 2
+console.log(findMedianSortedArrays([1,2], [3,4])); // Expected: 2.5`,
     },
     "2": {
       id: "2",
-      title: "Binary Tree Traversal",
+      title: "Longest Palindromic Substring",
       description:
-        "Write functions to traverse binary trees using different methods: in-order, pre-order, and post-order.",
+        "Given a string s, return the longest palindromic substring in s.",
       difficulty: "Medium",
-      estimatedTime: "45 min",
-      tags: ["Data Structures", "Trees", "Recursion"],
-      prompt: `Implement three binary tree traversal methods for the given TreeNode structure:
+      estimatedTime: "35 min",
+      tags: ["Two Pointers", "String", "Dynamic Programming"],
+      prompt: `A palindrome is a string that reads the same forward and backward.
+Given a string s, return the longest palindromic substring in s.
 
-1. inorderTraversal(root) - Left, Root, Right
-2. preorderTraversal(root) - Root, Left, Right  
-3. postorderTraversal(root) - Left, Right, Root
+Example 1:
+Input: s = "babad"
+Output: "bab"
+Explanation: "aba" is also a valid answer.
 
-Each function should return an array of node values in the correct order.`,
-      starterCode: `class TreeNode {
-  constructor(val, left = null, right = null) {
-    this.val = val;
-    this.left = left;
-    this.right = right;
-  }
-}
+Example 2:
+Input: s = "cbbd"
+Output: "bb"
 
-function inorderTraversal(root) {
+Constraints:
+- 1 <= s.length <= 1000
+- s consists of only digits and English letters.`,
+      starterCode: `function longestPalindrome(s) {
   // Your code here
 }
 
-function preorderTraversal(root) {
-  // Your code here
-}
-
-function postorderTraversal(root) {
-  // Your code here
-}
-
-// Test with sample tree
-const root = new TreeNode(1, null, new TreeNode(2, new TreeNode(3), null));
-console.log("Inorder:", inorderTraversal(root));`,
+// Test cases
+console.log(longestPalindrome("babad")); // Expected: "bab" or "aba"
+console.log(longestPalindrome("cbbd"));  // Expected: "bb"`,
     },
   }
 

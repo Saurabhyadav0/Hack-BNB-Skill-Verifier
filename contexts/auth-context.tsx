@@ -13,7 +13,7 @@ import {
   getStoredWallet,
   type WalletError,
   type WalletState,
-} from "@/lib/ wallet";
+} from "@/lib/wallet";
 
 interface AuthContextType extends WalletState {
   connect: () => Promise<void>;
