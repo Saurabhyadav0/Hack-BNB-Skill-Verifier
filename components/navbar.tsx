@@ -30,8 +30,8 @@ export function Navbar() {
             <Image
               src={theme === "dark" ? darkLogo : lightLogo}
               alt="SkillVerifier Logo"
-              width={240}
-              height={190}
+              width={200}
+              height={180}
               priority
             />
         
